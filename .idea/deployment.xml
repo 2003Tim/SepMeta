@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="zhangji@121.48.161.150:22">
+  <component name="PublishConfigData" autoUpload="Always" serverName="wlb@10.33.7.248:21122 password (2)">
     <serverData>
-      <paths name="121.48.165.7">
+      <paths name="wlb@10.33.7.248:21122 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/zhangji/Projects2/FEAT-master" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/srv/storage/hdd/zqc/wlb/code/SepMetaSyncfolders" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
-      <paths name="zhangji@121.48.161.150:22">
+      <paths name="wlb@10.33.7.248:21122 password (2)">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/zhangji/Projects2/FEAT-master" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/srv/storage/hdd/zqc/wlb/code/SepMetaSyncfolders" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="wulibang">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/deploymentpath/SepMeta" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

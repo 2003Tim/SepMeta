@@ -109,18 +109,44 @@ def compute_confidence_interval(data):
     pm = 1.96 * (std / np.sqrt(len(a)))
     return m, pm
 
-def postprocess_args(args):            
+# def postprocess_args(args):
+#     args.num_classes = args.way
+#     save_path1 = '-'.join([args.dataset, args.model_class, args.backbone_class, '{:02d}w{:02d}s{:02}q'.format(args.way, args.shot, args.query)])
+#     save_path2 = '_'.join([args.model_name, '0906*', str('_'.join(args.step_size.split(','))), str(args.gamma),
+#                            'lr{:.2g}'.format(args.lr),
+#                            str(args.lr_scheduler),
+#                            'b{}'.format(args.balance),
+#                            'bsz{:03d}'.format( max(args.way, args.num_classes)*(args.shot+args.query)),
+#                            'T1{}_wd{}'.format(args.temperature, args.weight_decay),
+#                            '{}s'.format(args.shot),
+#                            '{}_{}_{}_fB:{}_kl:{}'.format(args.episodes_per_epoch, args.percent, args.inc, args.fix_BN, args.balance_kl)
+#                            ])
+#     if args.init_weights is not None:
+#         save_path1 += '-Pre'
+#     if args.use_euclidean:
+#         save_path1 += '-DIS'
+#     else:
+#         save_path1 += '-SIM'
+#
+#     if not args.augment:
+#         save_path2 += '-NoAug'
+#
+#     if not os.path.exists(os.path.join(args.save_dir, save_path1)):
+#         os.mkdir(os.path.join(args.save_dir, save_path1))
+#     args.save_path = os.path.join(args.save_dir, save_path1, save_path2)
+#     return args
+def postprocess_args(args):
     args.num_classes = args.way
     save_path1 = '-'.join([args.dataset, args.model_class, args.backbone_class, '{:02d}w{:02d}s{:02}q'.format(args.way, args.shot, args.query)])
-    save_path2 = '_'.join([args.model_name, '0906*', str('_'.join(args.step_size.split(','))), str(args.gamma),
+    save_path2 = '_'.join([args.model_name, '0906', str('_'.join(args.step_size.split(','))), str(args.gamma),
                            'lr{:.2g}'.format(args.lr),
-                           str(args.lr_scheduler), 
+                           str(args.lr_scheduler),
                            'b{}'.format(args.balance),
                            'bsz{:03d}'.format( max(args.way, args.num_classes)*(args.shot+args.query)),
                            'T1{}_wd{}'.format(args.temperature, args.weight_decay),
                            '{}s'.format(args.shot),
-                           '{}_{}_{}_fB:{}_kl:{}'.format(args.episodes_per_epoch, args.percent, args.inc, args.fix_BN, args.balance_kl)
-                           ])    
+                           '{}_{}_{}_fB:{}_kl_{}'.format(args.episodes_per_epoch, args.percent, args.inc, args.fix_BN, args.balance_kl)
+                           ])
     if args.init_weights is not None:
         save_path1 += '-Pre'
     if args.use_euclidean:
@@ -130,10 +156,15 @@ def postprocess_args(args):
 
     if not args.augment:
         save_path2 += '-NoAug'
-            
+
     if not os.path.exists(os.path.join(args.save_dir, save_path1)):
         os.mkdir(os.path.join(args.save_dir, save_path1))
     args.save_path = os.path.join(args.save_dir, save_path1, save_path2)
+    # 生成最终路径前，再次检查并替换可能遗漏的非法字符
+    final_save_path = os.path.join(args.save_dir, save_path1, save_path2)
+    # 额外保险：替换所有可能的非法字符（:、*等）
+    final_save_path = final_save_path.replace(':', '_').replace('*', '_')
+    args.save_path = final_save_path
     return args
 
 def get_command_line_parser():

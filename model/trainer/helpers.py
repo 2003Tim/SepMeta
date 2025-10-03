@@ -43,8 +43,8 @@ def get_dataloader(args):
     if args.dataset == 'MiniImageNet':
         # Handle MiniImageNet
         from model.dataloader.mini_imagenet import MiniImageNet as Dataset
-    elif args.dataset == 'CUB':
-        from model.dataloader.cub import CUB as Dataset
+    # elif args.dataset == 'CUB':
+    #     from model.dataloader.cub import CUB as Dataset
     elif args.dataset == 'TieredImageNet':
         from model.dataloader.tiered_imagenet import tieredImageNet as Dataset
     else:
@@ -94,8 +94,8 @@ def get_dataloader_spl(args, classes):
     if args.dataset == 'MiniImageNet':
         # Handle MiniImageNet
         from model.dataloader.mini_imagenet import MiniImageNet as Dataset
-    elif args.dataset == 'CUB':
-        from model.dataloader.cub import CUB as Dataset
+    # elif args.dataset == 'CUB':
+    #     from model.dataloader.cub import CUB as Dataset
     elif args.dataset == 'TieredImageNet':
         from model.dataloader.tiered_imagenet import tieredImageNet as Dataset
     else:
@@ -126,6 +126,7 @@ def prepare_model(args):
     if args.init_weights is not None:
         model_dict = model.state_dict()        
         pretrained_dict = torch.load(args.init_weights)['params']
+        # pretrained_dict = torch.load(args.init_weights)['state_dict']  # 训练时保存的模型
         if args.backbone_class == 'ConvNet':
             pretrained_dict = {'encoder.'+k: v for k, v in pretrained_dict.items()}
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}

@@ -2,8 +2,8 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="842fac2f-379c-4fca-af88-3c12d08e6936" name="121.48.165.7">
-        <fileTransfer accessType="SFTP" host="121.48.165.7" port="12306" sshConfigId="addca8fd-1e4c-4122-a24a-37b508f49cc4" sshConfig="zhangji@121.48.165.7:12306 password">
+      <webServer id="ea602a56-7599-4b76-b329-b1dd842c9bf1" name="wulibang">
+        <fileTransfer rootFolder="/srv/storage/hdd/zqc/wlb" accessType="SFTP" host="10.33.7.248" port="21122" sshConfigId="6d2e2bdd-a0ae-45f3-b37f-b33476775161" sshConfig="wlb@10.33.7.248:21122 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

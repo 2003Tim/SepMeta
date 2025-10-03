@@ -21,9 +21,9 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, default='MiniImageNet', choices=['MiniImageNet', 'TieredImagenet', 'CUB'])    
     parser.add_argument('--backbone_class', type=str, default='Res12', choices=['ConvNet', 'Res12'])
     parser.add_argument('--schedule', type=int, nargs='+', default=[350, 400, 440, 460, 480], help='Decrease learning rate at these epochs.')
-    parser.add_argument('--gamma', type=float, default=0.1)
-    parser.add_argument('--query', type=int, default=15)    
-    parser.add_argument('--resume', type=bool, default=False)
+    parser.add_argument('--gamma', type=float, default=0.1)  # 学习率衰减因子
+    parser.add_argument('--query', type=int, default=15)    # 每个类别的查询样本数量
+    parser.add_argument('--resume', type=bool, default=True)  # 是否从断点恢复训练
     args = parser.parse_args()
     args.orig_imsize = -1
     pprint(vars(args))
@@ -38,16 +38,18 @@ if __name__ == '__main__':
     if args.dataset == 'MiniImageNet':
         # Handle MiniImageNet
         from model.dataloader.mini_imagenet import MiniImageNet as Dataset
-    elif args.dataset == 'CUB':
-        from model.dataloader.cub import CUB as Dataset
+    # elif args.dataset == 'CUB':
+    #     from model.dataloader.cub import CUB as Dataset
     elif args.dataset == 'TieredImagenet':
         from model.dataloader.tiered_imagenet import tieredImageNet as Dataset    
     else:
         raise ValueError('Non-supported Dataset.')
-
+    # 创建训练集数据加载器
     trainset = Dataset('train', args, augment=True)
     train_loader = DataLoader(dataset=trainset, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True)
     args.num_class = trainset.num_class
+
+    # 创建验证集数据加载器
     valset = Dataset('val', args)
     val_sampler = CategoriesSampler(valset.label, 200, valset.num_class, 1 + args.query) # test on 16-way 1-shot
     val_loader = DataLoader(dataset=valset, batch_sampler=val_sampler, num_workers=8, pin_memory=True)
@@ -63,7 +65,8 @@ if __name__ == '__main__':
     else:
         raise ValueError('No Such Encoder')    
     criterion = torch.nn.CrossEntropyLoss()
-    
+
+    # 设置GPU
     if torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         if args.ngpu  > 1:
@@ -71,7 +74,9 @@ if __name__ == '__main__':
         
         model = model.cuda()
         criterion = criterion.cuda()
-    
+
+
+    # 定义保存模型函数
     def save_model(name):
         torch.save(dict(params=model.state_dict()), osp.join(args.save_path, name + '.pth'))
     
@@ -88,7 +93,9 @@ if __name__ == '__main__':
         torch.save(state, osp.join(args.save_path, filename))
         if is_best:
             shutil.copyfile(osp.join(args.save_path, filename), osp.join(args.save_path, 'model_best.pth.tar'))
-    
+
+
+    # 检查是否从断点恢复训练
     if args.resume == True:
         # load checkpoint
         state = torch.load(osp.join(args.save_path, 'model_best.pth.tar'))
@@ -118,36 +125,36 @@ if __name__ == '__main__':
         global_count = 0
 
     timer = Timer()
-    writer = SummaryWriter(logdir=args.save_path)
+    writer = SummaryWriter(logdir=args.save_path) # TensorBoard写入器，用于日志记录
     for epoch in range(init_epoch, args.max_epoch + 1):
         # refine the step-size
         if epoch in args.schedule:
-            initial_lr *= args.gamma
+            initial_lr *= args.gamma   # 调整学习率
             for param_group in optimizer.param_groups:
                 param_group['lr'] = initial_lr
         
-        model.train()
-        tl = Averager()
-        ta = Averager()
-
+        model.train() # 设置模型为训练模式
+        tl = Averager() # 训练损失平均器
+        ta = Averager() # 训练准确率平均器
+        # 训练一个epoch
         for i, batch in enumerate(train_loader, 1):
-            global_count = global_count + 1
+            global_count = global_count + 1 # 全局训练步数增加
             if torch.cuda.is_available():
-                data, label = [_.cuda() for _ in batch]
-                label = label.type(torch.cuda.LongTensor)
+                data, label = [_.cuda() for _ in batch] # 将数据和标签移动到GPU
+                label = label.type(torch.cuda.LongTensor) # 确保标签是LongTensor类型
             else:
-                data, label = batch
+                data, label = batch # 如果使用CPU，直接使用batch
                 label = label.type(torch.LongTensor)
-            logits = model(data)
-            loss = criterion(logits, label)
-            acc = count_acc(logits, label)
+            logits = model(data) # 模型前向传播
+            loss = criterion(logits, label) # 计算损失
+            acc = count_acc(logits, label) # 计算准确率
             writer.add_scalar('data/loss', float(loss), global_count)
             writer.add_scalar('data/acc', float(acc), global_count)
-            if (i-1) % 100 == 0:
+            if (i-1) % 100 == 0: # 每100步打印一次训练信息
                 print('epoch {}, train {}/{}, loss={:.4f} acc={:.4f}'.format(epoch, i, len(train_loader), loss.item(), acc))
 
-            tl.add(loss.item())
-            ta.add(acc)
+            tl.add(loss.item()) # 累加训练损失
+            ta.add(acc) # 累加训练准确率
 
             optimizer.zero_grad()
             loss.backward()
@@ -165,13 +172,14 @@ if __name__ == '__main__':
             va_sim = Averager()            
             print('[Dist] best epoch {}, current best val acc={:.4f}'.format(trlog['max_acc_dist_epoch'], trlog['max_acc_dist']))
             print('[Sim] best epoch {}, current best val acc={:.4f}'.format(trlog['max_acc_sim_epoch'], trlog['max_acc_sim']))
-            # test performance with Few-Shot
+            # test performance with Few-Shot 准备标签，用于16-way 1-shot测试
             label = torch.arange(valset.num_class).repeat(args.query)
             if torch.cuda.is_available():
                 label = label.type(torch.cuda.LongTensor)
             else:
-                label = label.type(torch.LongTensor)        
-            with torch.no_grad():
+                label = label.type(torch.LongTensor)
+                # 验证一个epoch
+            with torch.no_grad(): # 关闭梯度计算
                 for i, batch in tqdm(enumerate(val_loader, 1)):
                     if torch.cuda.is_available():
                         data, _ = [_.cuda() for _ in batch]
