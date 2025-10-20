@@ -12,10 +12,10 @@ if __name__ == '__main__':
     parser = get_command_line_parser()
     args = postprocess_args(parser.parse_args())
     # with launch_ipdb_on_exception():
-    # pprint(vars(args))
+    pprint(vars(args))
 
     set_gpu(args.gpu)
-    trainer = FSLTrainer(args)
+
 
     # args.save_path = './checkpoints/MiniImageNet-ProtoNet-Res12-05w05s15q-Pre-DIS/' \
     #                  'Pipeline_PN_0.4_wd:0.0001_30.0_re_lr0.0001'
@@ -29,6 +29,7 @@ if __name__ == '__main__':
 
     # print("\nTest with Max Prob Acc: ")
     # trainer.evaluate_test()
+    trainer = FSLTrainer(args)
 
     print("Test with Max Acc: ")
     trainer.evaluate_test()
@@ -53,10 +54,10 @@ if __name__ == '__main__':
 #
 # ==============================================================================
 
-import xlwt
-workbook = xlwt.Workbook(encoding = 'utf-8')
-worksheet = workbook.add_sheet('My Worksheet')
-
-# 参数对应 行, 列, 值
-worksheet.write(1,0, label = 'this is test')
-workbook.save('Excel_test.xls')
+# import xlwt
+# workbook = xlwt.Workbook(encoding = 'utf-8')
+# worksheet = workbook.add_sheet('My Worksheet')
+#
+# # 参数对应 行, 列, 值
+# worksheet.write(1,0, label = 'this is test')
+# workbook.save('Excel_test.xls')

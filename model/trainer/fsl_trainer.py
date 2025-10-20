@@ -227,6 +227,23 @@ class FSLTrainer(Trainer):
 
 
     def evaluate_test(self):
+        import os.path as osp
+        model_dir = osp.dirname(self.args.init_weights)  # 提取模型目录
+        trlog_path = osp.join(model_dir, 'trlog')
+        best_val_acc = None  # 初始化标记
+        # 检查 trlog 是否存在，存在则读取
+
+        if osp.exists(trlog_path):
+            try:
+                trlog = torch.load(trlog_path)
+                if 'max_acc' in trlog:  # 确保 trlog 中有 max_acc 字段
+                    best_val_acc = trlog['max_acc']
+                    print(f"[INFO] 成功加载 trlog，best val_acc = {best_val_acc:.4f}")
+                else:
+                    print(f"[WARNING] trlog 中无 'max_acc' 字段")
+            except Exception as e:
+                print(f"[WARNING] trlog 加载失败: {e}，使用默认")
+
         # restore model args
         args = self.args
         # evaluation model
@@ -258,8 +275,13 @@ class FSLTrainer(Trainer):
         self.trlog['test_acc'] = va
         self.trlog['test_acc_interval'] = vap
         self.trlog['test_loss'] = vl
+        if best_val_acc is None:
+            best_val_acc = self.trlog.get('max_acc', 0.0)
+            print(f"[INFO] 使用默认 trlog，best val_acc = {best_val_acc:.4f}")
+        else:
+            print('\nbest val_acc={:.4f} \n'.format(best_val_acc))
 
-        print('\nbest val_acc={:.4f} \n'.format(self.trlog['max_acc']))
+        # print('\nbest val_acc={:.4f} \n'.format(self.trlog['max_acc']))
         print('Test acc={:.4f} + {:.4f}\n'.format(
             self.trlog['test_acc'],
             self.trlog['test_acc_interval']))
